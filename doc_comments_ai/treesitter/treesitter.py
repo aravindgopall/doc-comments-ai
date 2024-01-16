@@ -13,11 +13,13 @@ class TreesitterMethodNode:
         name: "str | bytes | None",
         doc_comment: "str | None",
         node: tree_sitter.Node,
+        signature: tree_sitter.Node,
     ):
         self.name = name
         self.doc_comment = doc_comment
         self.method_source_code = node.text.decode()
         self.node = node
+        self.signature = signature
 
 
 class Treesitter(ABC):
@@ -45,8 +47,9 @@ class Treesitter(ABC):
         for method in methods:
             method_name = self._query_method_name(method["method"])
             doc_comment = method["doc_comment"]
+            signature = method["signature"]
             result.append(
-                TreesitterMethodNode(method_name, doc_comment, method["method"])
+                TreesitterMethodNode(method_name, doc_comment, method["method"], signature)
             )
         return result
 
@@ -57,6 +60,7 @@ class Treesitter(ABC):
         methods = []
         if node.type == self.method_declaration_identifier:
             doc_comment_node = None
+            prev_node = None
             if (
                 node.prev_named_sibling
                 and node.prev_named_sibling.type == self.doc_comment_identifier
@@ -64,14 +68,17 @@ class Treesitter(ABC):
                 doc_comment_node = node.prev_named_sibling.text.decode()
             else:
                 # added for haskell purpose.
+                # print("current Node :\n", node.text.decode())
+                # print("Node :\n", node.prev_named_sibling.text.decode())
                 if node.prev_named_sibling.type == "signature":
+                    # print("Node Signature :\n", node.prev_named_sibling.text.decode())
                     prev_node = node.prev_named_sibling
                     if (
                         prev_node.prev_named_sibling
                         and prev_node.prev_named_sibling.type == self.doc_comment_identifier
                     ):
                         doc_comment_node = prev_node.prev_named_sibling.text.decode()
-            methods.append({"method": node, "doc_comment": doc_comment_node})
+            methods.append({"method": node, "doc_comment": doc_comment_node, "signature": prev_node})
         else:
             for child in node.children:
                 methods.extend(self._query_all_methods(child))

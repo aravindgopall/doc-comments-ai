@@ -84,9 +84,11 @@ def run():
         programming_language = utils.get_programming_language(file_extension)
 
         treesitter_parser = Treesitter.create_treesitter(programming_language)
+        # print("treesitter_parser:\n", treesitter_parser)
         treesitterNodes: list[TreesitterMethodNode] = treesitter_parser.parse(
             file_bytes
         )
+        # print("treesitterNodes:\n", treesitterNodes)
 
         for node in treesitterNodes:
             method_name = utils.get_bold_text(node.name)
@@ -103,6 +105,11 @@ def run():
                     continue
 
             method_source_code = node.node.text.decode()
+            # print("method_source_code:\n", method_source_code)
+
+            if node.signature:
+                signature_code = node.signature.text.decode()
+                method_source_code = f"{signature_code}\n{method_source_code}"
 
             tokens = utils.count_tokens(method_source_code)
             if tokens > 2048 and not (args.gpt4 or args.gpt3_5_16k):
@@ -120,6 +127,7 @@ def run():
             documented_method_source_code = llm_wrapper.generate_doc_comment(
                 programming_language.value, method_source_code, args.inline
             )
+            # print(documented_method_source_code)
 
             generated_doc_comments[
                 method_source_code

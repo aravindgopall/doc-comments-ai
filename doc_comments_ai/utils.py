@@ -64,6 +64,9 @@ def write_code_snippet_to_file(
         original_code (str): The original code snippet to be replaced.
         modified_code (str): The modified code snippet.
     """
+    # print("file_path:\n", file_path)
+    # print("original_code:\n", original_code)
+    # print("modified_code:\n", modified_code)
     with open(file_path, "r") as file:
         file_content = file.read()
         start_pos = file_content.find(original_code)
@@ -76,9 +79,11 @@ def write_code_snippet_to_file(
             modified_content = (
                 file_content[:start_pos].rstrip()
                 + "\n"
+                + "\n"
                 + indented_modified_code
                 + file_content[end_pos:]
             )
+            # print("modified_content:\n", modified_content)
             with open(file_path, "w", encoding="utf-8") as file:
                 file.write(modified_content)
 
